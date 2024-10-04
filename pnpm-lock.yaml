@@ -211,21 +211,9 @@ importers:
         specifier: ^1.9.3
         version: 1.9.3(vite@5.4.2)
 
-  packages/date-picker: {}
-
-  packages/form: {}
-
   packages/message: {}
 
-  packages/modal:
-    dependencies:
-      react-draggable:
-        specifier: ^4.4.6
-        version: 4.4.6(react-dom@18.3.1)(react@18.3.1)
-
   packages/request: {}
-
-  packages/selects: {}
 
   packages/stylelint-config:
     devDependencies:
@@ -265,12 +253,6 @@ importers:
       stylelint-prettier:
         specifier: ^5.0.2
         version: 5.0.2(prettier@3.3.3)(stylelint@16.9.0)
-
-  packages/table:
-    dependencies:
-      react-resizable:
-        specifier: ^3.0.5
-        version: 3.0.5(react-dom@18.3.1)(react@18.3.1)
 
   packages/utils:
     dependencies:
