@@ -1,11 +1,11 @@
-import type { FormList } from "#/form";
+import type { FormList, SearchList } from "#/form";
 import type { TFunction } from "i18next";
 import type { TableColumn, TableOptions } from '#/public';
-import { INPUT_REQUIRED } from '@/utils/config';
+import { FORM_REQUIRED } from '@/utils/config';
 import CustomizeInput from './components/CustomizeInput';
 
 // 搜索数据
-export const searchList = (t: TFunction): FormList[] => [
+export const searchList = (t: TFunction): SearchList[] => [
   {
     label: t('login.username'),
     name: 'username',
@@ -61,25 +61,47 @@ export const createList = (t: TFunction): FormList[] => [
   {
     label: t('login.username'),
     name: 'username',
-    rules: INPUT_REQUIRED(t),
-    component: 'Input'
+    rules: FORM_REQUIRED,
+    component: 'Input',
+    componentProps: {
+      style: {
+        width: '80%'
+      }
+    }
   },
   {
     label: t('content.nestedData'),
     name: ['user', 'name', 'test'],
-    rules: INPUT_REQUIRED(t),
-    component: 'Input'
+    rules: FORM_REQUIRED,
+    component: 'Input',
+    unit: '单位',
+    extra: '这是描述，这是描述，这是描述。',
+    componentProps: {
+      style: {
+        width: '80%'
+      }
+    }
   },
   {
     label: t('public.title'),
     name: 'title',
-    rules: INPUT_REQUIRED(t),
+    rules: FORM_REQUIRED,
     component: 'customize',
-    render: CustomizeInput
+    render: CustomizeInput,
+    componentProps: {
+      style: {
+        width: '80%'
+      }
+    }
   },
   {
     label: t('public.content'),
     name: 'content',
-    component: 'Editor'
+    component: 'RichEditor',
+    componentProps: {
+      style: {
+        width: '80%'
+      }
+    }
   }
 ];

@@ -6,12 +6,13 @@ import { Modal, Tooltip } from 'antd';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 import Draggable from 'react-draggable';
+import './index.less';
 
 interface Props extends Omit<ModalProps, 'onCancel'> {
   onCancel: () => void;
 }
 
-function BasicModal(props: Props) {
+function BaseModal(props: Props) {
   const { width, children, wrapClassName, onCancel } = props;
   const { t } = useTranslation();
   const [isDisabled, setDisabled] = useState(true);
@@ -85,14 +86,17 @@ function BasicModal(props: Props) {
   /** 自定义标题 */
   const titleRender = (
     <div
-      className="w-full cursor-move flex items-center justify-between"
+      className="modal-custom-title"
       onMouseOver={onMouseOver}
       onMouseOut={() => setDisabled(true)}
     >
-      <span>
+      <span className='cursor-text'>
         { props.title || '' }
       </span>
 
+      <div>
+
+      </div>
       { CloseRender() }
     </div>
   );
@@ -129,4 +133,4 @@ function BasicModal(props: Props) {
   );
 }
 
-export default BasicModal;
+export default BaseModal;

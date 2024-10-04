@@ -1,5 +1,6 @@
 import type { FormList } from "#/form";
 import type { TFunction } from "i18next";
+import { getGames } from '@/servers/platform/game';
 
 // 搜索数据
 export const searchList = (t: TFunction): FormList[] => [
@@ -24,9 +25,19 @@ export const searchList = (t: TFunction): FormList[] => [
     component: 'PartnerSelect'
   },
   {
-    label: t('dashboard.fullServerRecharge'),
-    name: 'all_pay',
-    wrapperCol: 15,
-    component: 'Checkbox'
-  }
+    label: t('dashboard.gameID') + '2',
+    name: 'keyword2',
+    wrapperCol: 200,
+    component: 'ApiSelect',
+    componentProps: {
+      api: getGames,
+      params: {
+        isAll: true
+      },
+      fieldNames: {
+        label: 'name',
+        value: 'id'
+      }
+    }
+  },
 ];

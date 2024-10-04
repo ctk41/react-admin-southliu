@@ -5,7 +5,9 @@
   "i18n-ally.sourceLanguage": "en",
   "i18n-ally.displayLanguage": "zh",
   "i18n-ally.keystyle": "nested",
-  "i18n-ally.localesPaths": "src/locales",
+  "i18n-ally.localesPaths": [
+    "src/locales"
+  ],
   "i18n-ally.enabledParsers": ["yaml", "ts", "js", "json"],
   "i18n-ally.pathMatcher": "{locale}/{namespaces}.{ext}",
   "i18n-ally.enabledFrameworks": [
@@ -32,7 +34,6 @@
     "camelcase",
     "parens",
     "paren",
-    "reduxjs",
     "Appstore",
     "ahooks",
     "brotliSize",
@@ -57,6 +58,7 @@
     "majesticons",
     "Unactivate",
     "languagedetector",
-    "locize"
+    "locize",
+    "zustand",
   ]
 }

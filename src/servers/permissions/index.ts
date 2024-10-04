@@ -1,5 +1,5 @@
 import type { LoginResult } from '@/pages/login/model';
-import { request } from '@/servers/request';
+import { request } from '@/utils/request';
 
 /**
  * 权限
@@ -7,7 +7,7 @@ import { request } from '@/servers/request';
  */
 export function getPermissions(data: object) {
   return request.get<LoginResult>(
-    '/authority/user/refresh-permissions',
+    '/authority/user/refresh-permissions/v2',
     { params: data }
   );
 }

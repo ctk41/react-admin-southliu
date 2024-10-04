@@ -1,23 +1,14 @@
 import type { TabsProps } from 'antd';
-import type { AppDispatch, RootState } from '@/stores';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getMenuByKey } from '@/menus/utils/helper';
 import { message, Tabs, Dropdown } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAliveController } from 'react-activation';
 import { useDropdownMenu } from '../hooks/useDropdownMenu';
-import { useDispatch, useSelector } from 'react-redux';
 import { useCommonStore } from '@/hooks/useCommonStore';
-import { setRefresh } from '@/stores/public';
 import { useTranslation } from 'react-i18next';
-import {
-  setActiveKey,
-  addTabs,
-  closeTabs,
-  setNav,
-  toggleLock,
-  switchTabsLang
-} from '@/stores/tabs';
+import { useTabsStore } from '@/stores/tabs';
+import { usePublicStore } from '@/stores';
 import styles from '../index.module.less';
 import TabRefresh from './TabRefresh';
 import TabMaximize from './TabMaximize';
@@ -28,19 +19,27 @@ function LayoutTabs() {
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
   const uri = pathname + search;
-  const dispatch: AppDispatch = useDispatch();
   const { refresh } = useAliveController();
   const [messageApi, contextHolder] = message.useMessage();
   const [time, setTime] = useState<null | NodeJS.Timeout>(null);
   const [refreshTime, seRefreshTime] = useState<null | NodeJS.Timeout>(null);
-  const isLock = useSelector((state: RootState) => state.tabs.isLock);
-  // 选中的标签值
-  const activeKey = useSelector((state: RootState) => state.tabs.activeKey);
+  const setRefresh = usePublicStore(state => state.setRefresh);
+  const {
+    tabs,
+    isLock,
+    activeKey, // 选中的标签值
+    setActiveKey,
+    addTabs,
+    closeTabs,
+    setNav,
+    toggleLock,
+    switchTabsLang,
+  } = useTabsStore(state => state);
+
   // 获取当前语言
   const currentLanguage = i18n.language;
 
   const {
-    tabs,
     permissions,
     isMaximize,
     menuList
@@ -61,24 +60,24 @@ function LayoutTabs() {
       };
       const newItems = getMenuByKey(menuByKeyProps);
       if (newItems?.key) {
-        dispatch(setActiveKey(newItems.key));
-        dispatch(setNav(newItems.nav));
-        dispatch(addTabs(newItems));
+        setActiveKey(newItems.key);
+        setNav(newItems.nav);
+        addTabs(newItems);
       } else {
-        dispatch(setActiveKey(path));
+        setActiveKey(path);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [permissions]);
+  }, [permissions, menuList]);
 
   useEffect(() => {
     handleAddTab();
-  }, [handleAddTab]);
+  }, [handleAddTab, permissions, menuList]);
 
   useEffect(() => {
-    dispatch(switchTabsLang(currentLanguage));
+    switchTabsLang(currentLanguage);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLanguage, tabs]),
+  }, [currentLanguage, tabs]);
 
   useEffect(() => {
     return () => {
@@ -103,13 +102,13 @@ function LayoutTabs() {
 
       if (isLock) {
         navigate(key);
-        dispatch(toggleLock(false));
+        toggleLock(false);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeKey, uri]);
-    
-  /** 
+
+  /**
    * 处理更改
    * @param key - 唯一值
    */
@@ -117,15 +116,15 @@ function LayoutTabs() {
     navigate(key);
   };
 
-  /** 
+  /**
    * 删除标签
    * @param targetKey - 目标key值
    */
   const remove = (targetKey: string) => {
-    dispatch(closeTabs(targetKey));
+    closeTabs(targetKey);
   };
 
-  /** 
+  /**
    * 处理编辑
    * @param targetKey - 目标key值
    * @param action - 动作
@@ -136,7 +135,7 @@ function LayoutTabs() {
     }
   };
 
-  /** 
+  /**
    * 点击重新加载
    * @param key - 点击值
    */
@@ -146,7 +145,7 @@ function LayoutTabs() {
 
     // 定时器没有执行时运行
     if (!time) {
-      dispatch(setRefresh(true));
+      setRefresh(true);
       refresh(key);
 
       setTime(
@@ -155,7 +154,7 @@ function LayoutTabs() {
             content: t('public.refreshSuccessfully'),
             key: 'refresh'
           });
-          dispatch(setRefresh(false));
+          setRefresh(false);
           setTime(null);
         }, 100)
       );
@@ -217,7 +216,7 @@ function LayoutTabs() {
           }}
           trigger={['contextMenu']}
         >
-          <div className='mr-3px'>
+          <div className='mr-1px'>
             { node }
           </div>
         </Dropdown>
@@ -232,7 +231,7 @@ function LayoutTabs() {
       justify-between
       mx-2
       transition-all
-      ${isMaximize ? styles.conMaximize : ''}
+      ${isMaximize ? styles['con-maximize'] : ''}
     `}>
       { contextHolder }
       {
@@ -244,19 +243,29 @@ function LayoutTabs() {
           activeKey={activeKey}
           type="editable-card"
           onEdit={onEdit}
-          items={tabs}
           renderTabBar={renderTabBar}
-        />
+        >
+          {
+            tabs?.map((item) => (
+              <Tabs.TabPane
+                key={item.key}
+                tab={item.label}
+              >
+                { item.label }
+              </Tabs.TabPane>
+            ))
+          }
+        </Tabs>
         : <span></span>
       }
-      
+
       <div className='flex'>
         {
           tabOptions?.map((item, index) => (
             <div
               key={index}
               className={`
-                ${styles.leftDivide}
+                left-divide-tab
                 change
                 divide-solid
                 w-36px

@@ -1,19 +1,18 @@
 import type { MenuProps } from 'antd';
 import type { SideMenu } from '#/public';
-import type { AppDispatch } from '@/stores';
 import { useCallback, useEffect, useState } from 'react';
 import { Menu } from 'antd';
 import { Icon } from '@iconify/react';
-import { useDispatch } from 'react-redux';
+import { setTitle } from '@/utils/helper';
 import { useTranslation } from 'react-i18next';
 import { useCommonStore } from '@/hooks/useCommonStore';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { addTabs, setNav, setActiveKey } from '@/stores/tabs';
-import { setOpenKeys, setSelectedKeys, toggleCollapsed } from '@/stores/menu';
+import { useMenuStore, useTabsStore } from '@/stores';
 import {
   filterMenus,
   getFirstMenu,
   getMenuByKey,
+  getMenuName,
   getOpenMenuByRouter,
   handleFilterMenus,
   splitPath
@@ -25,11 +24,20 @@ function LayoutMenu() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { pathname } = useLocation();
-  const dispatch: AppDispatch = useDispatch();
   const [menus, setMenus] = useState<SideMenu[]>([]);
   // 获取当前语言
   const currentLanguage = i18n.language;
 
+  const {
+    addTabs,
+    setNav,
+    setActiveKey
+  } = useTabsStore(state => state);
+  const {
+    setOpenKeys,
+    setSelectedKeys,
+    toggleCollapsed
+  } = useMenuStore(state => state);
   const {
     isMaximize,
     isCollapsed,
@@ -44,11 +52,26 @@ function LayoutMenu() {
   useEffect(() => {
     const newOpenKey = getOpenMenuByRouter(pathname);
     if (!isPhone && !isCollapsed) {
-      dispatch(setOpenKeys(newOpenKey));
-      dispatch(setSelectedKeys(pathname));
+      setOpenKeys(newOpenKey);
+      setSelectedKeys(pathname);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
+
+  /**
+   * 设置浏览器标签
+   * @param list - 菜单列表
+   * @param path - 路径
+   */
+  const handleSetTitle = useCallback((list: SideMenu[], path: string) => {
+    const title = getMenuName(list, path, i18n.language);
+    if (title) setTitle(t, title);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    handleSetTitle(menuList, pathname);
+  }, [pathname, menuList, handleSetTitle]);
 
   /**
    * 转换菜单icon格式
@@ -86,13 +109,13 @@ function LayoutMenu() {
     const menuByKeyProps = { menus, permissions, key: path };
     const newTab = getMenuByKey(menuByKeyProps);
     if (newTab) {
-      dispatch(setActiveKey(newTab.key));
-      dispatch(setNav(newTab.nav));
-      dispatch(addTabs(newTab));
+      setActiveKey(newTab.key);
+      setNav(newTab.nav);
+      addTabs(newTab);
     }
   };
 
-  /** 
+  /**
    * 点击菜单
    * @param e - 菜单事件
    */
@@ -141,7 +164,7 @@ function LayoutMenu() {
       }
     }
 
-    dispatch(setOpenKeys(newOpenKey));
+    setOpenKeys(newOpenKey);
   };
 
   /** 点击logo */
@@ -153,19 +176,19 @@ function LayoutMenu() {
 
   /** 隐藏菜单 */
   const hiddenMenu = () => {
-    dispatch(toggleCollapsed(true));
+    toggleCollapsed(true);
   };
 
   return (
     <>
-      <div 
+      <div
         className={`
           transition-all
           overflow-auto
           z-2
           ${styles.menu}
-          ${isCollapsed ? styles.menuClose : ''}
-          ${isMaximize || (isPhone && isCollapsed) ? styles.menuNone : ''}
+          ${isCollapsed ? styles['menu-close'] : ''}
+          ${isMaximize || (isPhone && isCollapsed) ? styles['menu-none'] : ''}
           ${isPhone ? '!z-1002' : ''}
         `}
       >
@@ -188,7 +211,7 @@ function LayoutMenu() {
             className="object-contain"
             alt="logo"
           />
-          
+
           <span className={`
             text-white
             ml-3
@@ -202,6 +225,7 @@ function LayoutMenu() {
         </div>
 
         <Menu
+          id="layout-menu"
           className="z-1000"
           selectedKeys={[selectedKeys]}
           openKeys={openKeys}

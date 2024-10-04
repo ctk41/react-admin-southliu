@@ -15,13 +15,15 @@ import {
   Slider,
   Upload
 } from 'antd';
+import {
+  BaseDatePicker,
+  BaseRangePicker,
+  BaseTimePicker,
+  BaseTimeRangePicker
+} from '@/components/Dates';
 import ApiSelect from '@/components/Selects/ApiSelect';
 import ApiTreeSelect from '@/components/Selects/ApiTreeSelect';
-import BasicDatePicker from '@/components/Dates/BasicDatePicker';
-import BasicRangePicker from '@/components/Dates/BasicRangePicker';
-import BasicTimePicker from '@/components/Dates/BasicTimePicker';
-import BasicTimeRangePicker from '@/components/Dates/BasicTimeRangePicker';
-import BasicTransfer from '@/components/Transfer/BasicTransfer';
+import BaseTransfer from '@/components/Transfer/BaseTransfer';
 import PasswordStrength from '@/components/PasswordStrength';
 import WangEditor from '@/components/WangEditor';
 
@@ -42,11 +44,11 @@ componentMap.set('Switch', Switch);
 componentMap.set('Rate', Rate);
 componentMap.set('Slider', Slider);
 componentMap.set('Upload', Upload);
-componentMap.set('Transfer', BasicTransfer);
-componentMap.set('DatePicker', BasicDatePicker);
-componentMap.set('RangePicker', BasicRangePicker);
-componentMap.set('TimePicker', BasicTimePicker);
-componentMap.set('TimeRangePicker', BasicTimeRangePicker);
+componentMap.set('Transfer', BaseTransfer);
+componentMap.set('DatePicker', BaseDatePicker);
+componentMap.set('RangePicker', BaseRangePicker);
+componentMap.set('TimePicker', BaseTimePicker);
+componentMap.set('TimeRangePicker', BaseTimeRangePicker);
 componentMap.set('ApiSelect', ApiSelect);
 componentMap.set('ApiTreeSelect', ApiTreeSelect);
 componentMap.set('PasswordStrength', PasswordStrength);
@@ -59,7 +61,7 @@ CreateBusiness();
  * 获取组件
  * @param item - 表单项
  */
-export function getComponent(t: TFunction, item: FormList) {
+export function getComponent(t: TFunction, item: FormList, onPressEnter: () => void) {
   const { component, componentProps } = item;
 
   // 当组件类型为自定义时
@@ -75,10 +77,18 @@ export function getComponent(t: TFunction, item: FormList) {
   if (!Comp) return <></>;
 
   return (
-    <Comp
-      {...initCompProps(t, component)}
-      {...componentProps}
-    />
+    <>
+      <Comp
+        {...initCompProps(t, component, onPressEnter)}
+        {...componentProps}
+      />
+      {
+        item.unit &&
+        <span className='ml-5px whitespace-nowrap'>
+          { item.unit }
+        </span>
+      }
+    </>
   );
 }
 

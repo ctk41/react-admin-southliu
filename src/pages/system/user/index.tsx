@@ -1,43 +1,37 @@
 import type { FormData } from '#/form';
 import type { DataNode } from 'antd/es/tree';
-import type { Key } from 'antd/es/table/interface';
-import type { PagePermission, TableOptions } from '#/public';
-import type { FormFn } from '@/components/Form/BasicForm';
+import type { Key, TableRowSelection } from 'antd/es/table/interface';
+import type { PagePermission } from '#/public';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createList, searchList, tableColumns } from './model';
-import { Button, message } from 'antd';
-import { useTitle } from '@/hooks/useTitle';
+import { type FormInstance, Button, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { checkPermission } from '@/utils/permissions';
 import { useCommonStore } from '@/hooks/useCommonStore';
-import { ADD_TITLE, EDIT_TITLE } from '@/utils/config';
+import { ADD_TITLE, EDIT_TITLE, INIT_PAGINATION } from '@/utils/config';
 import { UpdateBtn, DeleteBtn } from '@/components/Buttons';
 import { getPermission, savePermission } from '@/servers/system/menu';
 import {
+  batchDeleteUser,
   createUser,
   deleteUser,
   getUserById,
   getUserPage,
   updateUser
 } from '@/servers/system/user';
-import BasicContent from '@/components/Content/BasicContent';
-import BasicSearch from '@/components/Search/BasicSearch';
-import BasicModal from '@/components/Modal/BasicModal';
-import BasicForm from '@/components/Form/BasicForm';
-import BasicTable from '@/components/Table/BasicTable';
-import BasicPagination from '@/components/Pagination/BasicPagination';
+import BaseContent from '@/components/Content/BaseContent';
+import BaseSearch from '@/components/Search/BaseSearch';
+import BaseModal from '@/components/Modal/BasicModal';
+import BaseForm from '@/components/Form/BaseForm';
+import BaseTable from '@/components/Table/BaseTable';
+import BasePagination from '@/components/Pagination/BasePagination';
+import BaseCard from '@/components/Card/BaseCard';
 import PermissionDrawer from './components/PermissionDrawer';
 
 // 当前行数据
 interface RowData {
   id: string;
 }
-
-// 初始化搜索
-const initSearch = {
-  page: 1,
-  pageSize: 20
-};
 
 // 初始化新增数据
 const initCreate = {
@@ -46,18 +40,19 @@ const initCreate = {
 
 function Page() {
   const { t } = useTranslation();
-  useTitle(t, t('system.userTitle'));
-  const searchFormRef = useRef<FormFn>(null);
-  const createFormRef = useRef<FormFn>(null);
+  const createFormRef = useRef<FormInstance>(null);
+  const columns = tableColumns(t, optionRender);
   const [messageApi, contextHolder] = message.useMessage();
+  const [isFetch, setFetch] = useState(false);
   const [isLoading, setLoading] = useState(false);
   const [isCreateLoading, setCreateLoading] = useState(false);
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [createTitle, setCreateTitle] = useState(ADD_TITLE(t));
   const [createId, setCreateId] = useState('');
   const [createData, setCreateData] = useState<FormData>(initCreate);
-  const [page, setPage] = useState(initSearch.page);
-  const [pageSize, setPageSize] = useState(initSearch.pageSize);
+  const [searchData, setSearchData] = useState<FormData>({});
+  const [page, setPage] = useState(INIT_PAGINATION.page);
+  const [pageSize, setPageSize] = useState(INIT_PAGINATION.pageSize);
   const [total, setTotal] = useState(0);
   const [tableData, setTableData] = useState<FormData[]>([]);
 
@@ -65,12 +60,13 @@ function Page() {
   const [isPromiseVisible, setPromiseVisible] = useState(false);
   const [promiseCheckedKeys, setPromiseCheckedKeys] = useState<Key[]>([]);
   const [promiseTreeData, setPromiseTreeData] = useState<DataNode[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
 
   const { permissions } = useCommonStore();
 
   // 权限前缀
   const permissionPrefix = '/authority/user';
-  
+
   // 权限
   const pagePermission: PagePermission = {
     page: checkPermission(`${permissionPrefix}/index`, permissions),
@@ -80,36 +76,41 @@ function Page() {
     permission: checkPermission(`${permissionPrefix}/authority`, permissions)
   };
 
+  /** 获取表格数据 */
+  const getPage = useCallback(async () => {
+    const params = { ...searchData, page, pageSize };
+
+    try {
+      setLoading(true);
+      const { code, data } = await getUserPage(params);
+      if (Number(code) !== 200) return;
+      const { items, total } = data;
+      setTotal(total);
+      setTableData(items);
+    } finally {
+      setFetch(false);
+      setLoading(false);
+    }
+  }, [page, pageSize, searchData]);
+
+  useEffect(() => {
+    if (isFetch) getPage();
+  }, [getPage, isFetch]);
+
   /**
    * 点击搜索
    * @param values - 表单返回数据
    */
   const onSearch = (values: FormData) => {
     setPage(1);
-    handleSearch({ page: 1, pageSize, ...values });
+    setSearchData(values);
+    setFetch(true);
   };
-
-  /**
-   * 搜索提交
-   * @param values - 表单返回数据
-   */
-  const handleSearch = useCallback(async (values: FormData) => {
-    try {
-      setLoading(true);
-      const { code, data } = await getUserPage(values);
-      if (Number(code) !== 200) return;
-      const { items, total } = data;
-      setTotal(total);
-      setTableData(items);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   // 首次进入自动加载接口数据
   useEffect(() => {
-    if (pagePermission.page) handleSearch({ ...initSearch });
-  }, [handleSearch, pagePermission.page]);
+    if (pagePermission.page) getPage();
+  }, [getPage, pagePermission.page]);
 
   /** 开启权限 */
   const openPermission = async (id: string) => {
@@ -127,12 +128,12 @@ function Page() {
       setLoading(false);
     }
   };
-  
+
   /** 关闭权限 */
   const closePermission = () => {
     setPromiseVisible(false);
   };
-  
+
   /**
    * 权限提交
    */
@@ -180,19 +181,12 @@ function Page() {
 
   /** 表格提交 */
   const createSubmit = () => {
-    createFormRef.current?.handleSubmit();
+    createFormRef.current?.submit();
   };
 
   /** 关闭新增/修改弹窗 */
   const closeCreate = () => {
     setCreateOpen(false);
-  };
-
-  /** 获取表格数据 */
-  const getPage = () => {
-    const formData = searchFormRef.current?.getFieldsValue() || {};
-    const params = { ...formData, page, pageSize };
-    handleSearch(params);
   };
 
   /**
@@ -230,6 +224,27 @@ function Page() {
     }
   };
 
+  /** 处理批量删除 */
+  const handleBatchDelete = async () => {
+    try {
+      if (!selectedRowKeys.length) {
+        return messageApi.warning({
+          content: t('public.tableSelectWarning'),
+          key: 'pleaseSelect',
+        });
+      }
+      setLoading(true);
+      const params = { ids: selectedRowKeys };
+      const { code, message } = await batchDeleteUser(params);
+      if (Number(code) === 200) {
+        messageApi.success(message || t('public.successfullyDeleted'));
+        getPage();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /**
    * 处理分页
    * @param page - 当前页数
@@ -238,8 +253,21 @@ function Page() {
   const onChangePagination = (page: number, pageSize: number) => {
     setPage(page);
     setPageSize(pageSize);
-    const formData = searchFormRef.current?.getFieldsValue();
-    handleSearch({ ...formData, page, pageSize });
+    setFetch(true);
+  };
+
+  /**
+   * 监听表格多选变化
+   * @param newSelectedRowKeys - 勾选值
+   */
+  const onSelectChange = (newSelectedRowKeys: Key[]) => {
+    setSelectedRowKeys(newSelectedRowKeys);
+  };
+
+  /** 表格多选  */
+  const rowSelection: TableRowSelection<object> = {
+    selectedRowKeys,
+    onChange: onSelectChange,
   };
 
   /**
@@ -247,8 +275,8 @@ function Page() {
    * @param _ - 当前值
    * @param record - 当前行参数
    */
-  const optionRender: TableOptions<object> = (_, record) => (
-    <>
+  function optionRender(_: unknown, record: object) {
+    return <>
       {
         pagePermission.permission === true &&
         <Button
@@ -275,62 +303,80 @@ function Page() {
           handleDelete={() => onDelete((record as RowData).id)}
         />
       }
+    </>;
+  }
+
+  /** 左侧渲染 */
+  const leftContentRender = (
+    <>
+      <DeleteBtn
+        isIcon
+        isLoading={isLoading}
+        name={t('public.batchDelete')}
+        handleDelete={handleBatchDelete}
+      />
+      <div className='ml-10px'>左侧demo</div>
     </>
   );
 
   return (
-    <BasicContent isPermission={pagePermission.page}>
-      <>
-        { contextHolder }
-        <BasicSearch
-          formRef={searchFormRef}
+    <BaseContent isPermission={pagePermission.page}>
+      { contextHolder }
+      <BaseCard>
+        <BaseSearch
           list={searchList(t)}
-          data={initSearch}
+          data={searchData}
           isLoading={isLoading}
-          isCreate={pagePermission.create}
-          onCreate={onCreate}
           handleFinish={onSearch}
         />
-        
-        <BasicTable
-          loading={isLoading}
-          columns={tableColumns(t, optionRender)}
+      </BaseCard>
+
+      <BaseCard className='mt-10px'>
+        <BaseTable
+          isLoading={isLoading}
+          isCreate={pagePermission.create}
+          columns={columns}
           dataSource={tableData}
+          rowSelection={rowSelection}
+          leftContent={leftContentRender}
+          rightContent={<div>右侧demo</div>}
+          getPage={getPage}
+          onCreate={onCreate}
         />
 
-        <BasicPagination
+        <BasePagination
           disabled={isLoading}
           current={page}
           pageSize={pageSize}
           total={total}
           onChange={onChangePagination}
         />
+      </BaseCard>
 
-        <BasicModal
-          title={createTitle}
-          open={isCreateOpen}
-          confirmLoading={isCreateLoading}
-          onOk={createSubmit}
-          onCancel={closeCreate}
-        >
-          <BasicForm
-            formRef={createFormRef}
-            list={createList(t)}
-            data={createData}
-            labelCol={{ span: 6 }}
-            handleFinish={handleCreate}
-          />
-        </BasicModal>
-
-        <PermissionDrawer
-          isVisible={isPromiseVisible}
-          treeData={promiseTreeData}
-          checkedKeys={promiseCheckedKeys}
-          onClose={closePermission}
-          onSubmit={permissionSubmit}
+      <BaseModal
+        title={createTitle}
+        open={isCreateOpen}
+        confirmLoading={isCreateLoading}
+        onOk={createSubmit}
+        onCancel={closeCreate}
+      >
+        <BaseForm
+          ref={createFormRef}
+          list={createList(t)}
+          data={createData}
+          labelCol={{ span: 6 }}
+          handleFinish={handleCreate}
         />
-      </>
-    </BasicContent>
+      </BaseModal>
+
+      <PermissionDrawer
+        isVisible={isPromiseVisible}
+        treeData={promiseTreeData}
+        checkedKeys={promiseCheckedKeys}
+        onClose={closePermission}
+        onSubmit={permissionSubmit}
+      />
+    </BaseContent>
   );
 }
 

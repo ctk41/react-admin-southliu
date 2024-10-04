@@ -1,18 +1,19 @@
-import type { FormList } from "#/form";
+import type { FormList, SearchList } from "#/form";
 import type { TFunction } from "i18next";
 import type { TableColumn, TableOptions } from '#/public';
-import { INPUT_REQUIRED, SELECT_REQUIRED } from '@/utils/config';
+import { FORM_REQUIRED } from '@/utils/config';
 import { MENU_ACTIONS, MENU_MODULE, MENU_STATUS } from '@/utils/constants';
 import { valueToLabel } from "@/utils/helper";
 
 // 搜索数据
-export const searchList = (t: TFunction): FormList[] => [
+export const searchList = (t: TFunction): SearchList[] => [
   {
     label: t('system.state'),
     name: 'status',
+    wrapperCol: 100,
     component: 'Select',
     componentProps: {
-      options: MENU_STATUS
+      options: MENU_STATUS(t)
     }
   },
   {
@@ -21,7 +22,7 @@ export const searchList = (t: TFunction): FormList[] => [
     wrapperCol: 170,
     component: 'Select',
     componentProps: {
-      options: MENU_MODULE
+      options: MENU_MODULE(t)
     }
   },
   {
@@ -52,7 +53,7 @@ export const tableColumns = (t: TFunction, optionRender: TableOptions<object>): 
       dataIndex: 'status',
       width: 200,
       render: (value: number) => (
-        <span>{ valueToLabel(value, MENU_STATUS) }</span>
+        <span>{ valueToLabel(value, MENU_STATUS(t)) }</span>
       )
     },
     {
@@ -90,31 +91,31 @@ export const createList = (t: TFunction, id: string): FormList[] => [
   {
     label: t('public.name'),
     name: 'name',
-    rules: INPUT_REQUIRED(t),
+    rules: FORM_REQUIRED,
     component: 'Input'
   },
   {
     label: t('system.state'),
     name: 'status',
-    rules: SELECT_REQUIRED(t),
+    rules: FORM_REQUIRED,
     component: 'Select',
     componentProps: {
-      options: MENU_STATUS
+      options: MENU_STATUS(t)
     }
   },
   {
     label: t('system.module'),
     name: 'module',
-    rules: SELECT_REQUIRED(t),
+    rules: FORM_REQUIRED,
     component: 'Select',
     componentProps: {
-      options: MENU_MODULE
+      options: MENU_MODULE(t)
     }
   },
   {
     label: t('system.controller'),
     name: 'controller',
-    rules: INPUT_REQUIRED(t),
+    rules: FORM_REQUIRED,
     component: 'Input'
   },
   {
@@ -123,7 +124,7 @@ export const createList = (t: TFunction, id: string): FormList[] => [
     hidden: !!id,
     component: 'CheckboxGroup',
     componentProps: {
-      options: MENU_ACTIONS
+      options: MENU_ACTIONS(t)
     }
   }
 ];

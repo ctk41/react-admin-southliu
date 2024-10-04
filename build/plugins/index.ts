@@ -1,8 +1,8 @@
 import type { PluginOption } from 'vite';
 import { presetUno, presetAttributify, presetIcons } from 'unocss';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { preloadPlugin } from './preload';
 import { timePlugin } from './time';
+import { versionUpdatePlugin } from './version';
 import react from '@vitejs/plugin-react-swc';
 import legacy from '@vitejs/plugin-legacy';
 import unocss from 'unocss/vite';
@@ -17,8 +17,10 @@ export function createVitePlugins() {
         presetUno(), 
         presetAttributify(), 
         presetIcons()
-      ],
-    })
+      ]
+    }),
+    // 版本控制
+    versionUpdatePlugin()
   ];
 
   if (process.env.NODE_ENV === 'production') {
@@ -41,8 +43,6 @@ export function createVitePlugins() {
     }),
     // 打包时间
     timePlugin(),
-    // 预加载处理
-    vitePlugins.push(preloadPlugin());
     // 压缩包
     vitePlugins.push(viteCompression());
   }

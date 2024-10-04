@@ -1,6 +1,6 @@
 import type { TableColumn } from '#/public';
 import { useTranslation } from 'react-i18next';
-import BasicTable from '@/components/Table/BasicTable';
+import BaseTable from '@/components/Table/BaseTable';
 
 function VirtualTable() {
   const { t } = useTranslation();
@@ -24,11 +24,12 @@ function VirtualTable() {
   }
 
   return (
-    <BasicTable
+    <BaseTable
       isVirtual
       columns={columns}
       dataSource={data}
       scrollY={500}
+      isOperate={false}
     />
   );
 }

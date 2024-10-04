@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next';
-import type { ComponentProps, ComponentType } from '#/form';
-import { DATE_FORMAT, TIME_FORMAT } from '@/utils/constants';
+import type { FormItemProps } from 'antd';
+import type { ComponentProps, ComponentType, FormList } from '#/form';
+import { DATE_FORMAT, TIME_FORMAT } from '@/utils/config';
 
 /**
  * 处理子节点的值的属性
@@ -25,7 +26,11 @@ export function handleValuePropName(component: ComponentType): string {
  * 初始化组件自定义属性
  * @param component - 组件名
  */
-export function initCompProps(t: TFunction, component: ComponentType): ComponentProps {
+export function initCompProps(
+  t: TFunction,
+  component: ComponentType,
+  onPressEnter: () => void
+): ComponentProps {
   switch (component) {
     // 下拉框
     case 'Select':
@@ -34,10 +39,19 @@ export function initCompProps(t: TFunction, component: ComponentType): Component
         placeholder: t('public.inputPleaseSelect')
       };
 
+    // 输入框
+    case 'Input':
+      return {
+        allowClear: true,
+        placeholder: t('public.inputPleaseEnter'),
+        onPressEnter
+      };
+
     // 数字框
     case 'InputNumber':
       return {
-        placeholder: t('public.inputPleaseEnter')
+        placeholder: t('public.inputPleaseEnter'),
+        onPressEnter
       };
 
     // 勾选框
@@ -75,7 +89,7 @@ export function initCompProps(t: TFunction, component: ComponentType): Component
         placeholder: [t('public.inputPleaseSelect'), t('public.inputPleaseSelect')],
         format: [TIME_FORMAT, TIME_FORMAT],
       };
-    
+
     default:
       return {
         allowClear: true,
@@ -83,3 +97,14 @@ export function initCompProps(t: TFunction, component: ComponentType): Component
       };
   }
 }
+
+/**
+ * 过滤表单数据
+ * @param data - 表单数据
+ */
+export const filterFormItem = (data: FormList): FormItemProps => {
+  const result = JSON.parse(JSON.stringify(data));
+  delete result.componentProps;
+
+  return result as FormItemProps;
+};

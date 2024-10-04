@@ -2,14 +2,16 @@ import type { FormData } from '#/form';
 import { useCallback, useEffect, useState } from 'react';
 import { getDataTrends } from '@/servers/dashboard';
 import { searchList } from './model';
-import { useTitle } from '@/hooks/useTitle';
-import { useUnactivate } from 'react-activation';
 import { useTranslation } from 'react-i18next';
-import BasicSearch from '@/components/Search/BasicSearch';
-import BasicContent from '@/components/Content/BasicContent';
+import { useUnactivate } from 'react-activation';
+import { checkPermission } from '@/utils/permissions';
+import { useCommonStore } from '@/hooks/useCommonStore';
+import BaseSearch from '@/components/Search/BaseSearch';
+import BaseContent from '@/components/Content/BaseContent';
 import Bar from './components/Bar';
 import Line from './components/Line';
 import Block from './components/Block';
+import BaseCard from '@/components/Card/BaseCard';
 
 // 初始化搜索
 const initSearch = {
@@ -18,8 +20,9 @@ const initSearch = {
 
 function Dashboard() {
   const { t } = useTranslation();
-  useTitle(t, t('dashboard.title'));
   const [isLoading, setLoading] = useState(false);
+  const { permissions } = useCommonStore();
+  const isPermission = checkPermission('/dashboard', permissions);
 
   /**
    * 搜索提交
@@ -47,16 +50,17 @@ function Dashboard() {
   });
 
   return (
-    <BasicContent isPermission={true}>
-      <>
-        <BasicSearch
+    <BaseContent isPermission={isPermission}>
+      <BaseCard>
+        <BaseSearch
           list={searchList(t)}
           data={initSearch}
           isLoading={isLoading}
-          isCreate={false}
           handleFinish={handleSearch}
         />
+      </BaseCard>
 
+      <BaseCard className='mt-10px'>
         <div className='py-10px'>
           <Block />
         </div>
@@ -65,8 +69,8 @@ function Dashboard() {
           <Line />
           <Bar />
         </div>
-      </>
-    </BasicContent>
+      </BaseCard>
+    </BaseContent>
   );
 }
 

@@ -5,7 +5,7 @@ import { Form, Input, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { updatePassword } from '@/servers/login';
 import { PASSWORD_RULE } from '@/utils/config';
-import BasicModal from '@/components/Modal/BasicModal';
+import BaseModal from '@/components/Modal/BasicModal';
 import PasswordStrength from '@/components/PasswordStrength';
 
 export interface PasswordModal {
@@ -36,7 +36,7 @@ function UpdatePassword(props: Props) {
 
   /** 点击模态框确定 */
   const onOk = () => {
-    form.submit();
+    form?.submit();
   };
 
   /**
@@ -66,7 +66,7 @@ function UpdatePassword(props: Props) {
   return (
     <>
       { contextHolder }
-      <BasicModal
+      <BaseModal
         title={t('public.changePassword')}
         open={isOpen}
         confirmLoading={isLoading}
@@ -111,7 +111,7 @@ function UpdatePassword(props: Props) {
             <PasswordStrength />
           </Form.Item>
         </Form>
-      </BasicModal>
+      </BaseModal>
     </>
   );
 }
